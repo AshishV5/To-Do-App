@@ -16,7 +16,7 @@ async function go() {
 
 go()
 
-app.use(express.json())
+// app.use(express.json())
 app.use(express.urlencoded({extended: false}))
 
 function passwordProtected(req, res, next) {
@@ -32,7 +32,7 @@ function passwordProtected(req, res, next) {
 
 app.use(passwordProtected)
 
-app.get('/', async function(req, res) {
+app.get('/', passwordProtected, async function(req, res) {
   const items = await db.collection('items').find().toArray()
   res.send(`<!DOCTYPE html>
   <html>
@@ -71,19 +71,19 @@ app.get('/', async function(req, res) {
   </html>`)
 })
 
-app.post('/create-item', async function(req, res) {
+app.post('/create-item', passwordProtected, async function(req, res) {
   let safeText = sanitizeHTML(req.body.Text, {allowedTags: [], allowedAttributes: {}})
   const info = await db.collection('items').insertOne({text: safeText})
   res.json({_id: info.insertedId, text: safeText})
 })
 
-app.post('/update-item', async function(req, res) {
+app.post('/update-item', passwordProtected, async function(req, res) {
   let safeText = sanitizeHTML(req.body.Text, {allowedTags: [], allowedAttributes: {}})
   await db.collection('items').findOneAndUpdate({_id: new ObjectId(req.body.id)}, {$set: {text: safeText}})  
   res.send("success")
 })
 
-app.post('/delete-item', async function(req, res) {
+app.post('/delete-item', swordProtected, async function(req, res) {
   await db.collection('items').deleteOne({_id: new ObjectId(req.body.id)})
   res.send("success")
 })
